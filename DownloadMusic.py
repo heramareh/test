@@ -104,4 +104,5 @@ if __name__ == "__main__":
         except:
             print "输入有误，请重新输入："
     print "退出程序。"
+    os.system("pause")
 
