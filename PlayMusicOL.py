@@ -39,6 +39,16 @@ def get_music_info(music_id):
     except:
         return None
 
+def sort_lrc(content):
+    TIME_AXIS_REGEXP = re.compile('\[\d+\:\d+\.\d+\]')
+    DEL_TIME_AXIS_REGEXP = re.compile('(\[\d+\:\d+\.\d+\])*(.*)')
+    content_sorted = []
+    for i in content:
+        for j in TIME_AXIS_REGEXP.findall(i):
+            content_sorted.append(j + DEL_TIME_AXIS_REGEXP.findall(i)[0][1])
+    content_sorted.sort()
+    return content_sorted
+
 def read_file(path):
     if not os.path.exists(path):
         print 'path : \'' + path + '\' not find.'
@@ -49,7 +59,7 @@ def read_file(path):
             content += reduce(lambda x, y: x + y, fp)
     finally:
         fp.close()
-    return content.split('\n')
+    return sort_lrc(content.split('\n'))
 
 class Lyrics:
     TIME_AXIS_REGEXP = re.compile('\[(\d+)\:(\d+)\.(\d+)\]')
