@@ -134,7 +134,7 @@ if __name__ == "__main__":
     print u"***************************************************"
     n = 1
     while n:
-        name = raw_input("请输入：".decode('utf8').encode('gbk')).decode("gbk")
+        name = raw_input("请输入：".decode('utf8').encode('gbk')).decode("gbk").strip()
         name_list = []
         if name == 'all':
             name_list = channel_names
@@ -149,9 +149,9 @@ if __name__ == "__main__":
         while True:
             name = random.choice(name_list)
             music_list = get_music_list(channel_dict[name])
-            music = random.choice(music_list)
+            m = random.choice(music_list)
             try:
-                music_info = get_music_info(str(music['id']))
+                music_info = get_music_info(str(m['id']))
                 if music_info:
                     # content = requests.get(music_info['songLink'])
                     num = str(random.randint(10000, 99999))
@@ -165,6 +165,7 @@ if __name__ == "__main__":
                         seconds = music_info['time']
                         name = music_info['songName']
                         artistName = music_info['artistName']
+                        os.system('cls')
                         print u"正在播放：" + name + "_" + artistName + "  " + str(seconds / 60).zfill(2) + ":" + str(
                             seconds % 60).zfill(2)
                         music.play()
@@ -177,7 +178,6 @@ if __name__ == "__main__":
                             print u"加载歌词失败"
                         time.sleep(seconds)
                         music.stop()
-                        time.sleep(5)
                         os.system('cls')
                         if os.path.exists(lrcName):
                             os.remove(lrcName)
@@ -189,7 +189,7 @@ if __name__ == "__main__":
                     os.remove(lrcName)
                 if os.path.exists(songName):
                     os.remove(songName)
-                break
+                continue
             finally:
                 if os.path.exists(lrcName):
                     os.remove(lrcName)

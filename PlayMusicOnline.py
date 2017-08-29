@@ -31,18 +31,6 @@ def get_music_info(music_id):
     except:
         return None
 
-PlayingMusic = ''
-music = ''
-seconds = 0
-
-def get_all_musics(path):
-    music_list = []
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            if file.endswith(".mp3") or file.endswith(".wma"):
-                music_list.append(os.path.join(root, file))
-    return music_list
-
 def read_file(path):
     if not os.path.exists(path):
         print 'path : \'' + path + '\' not find.'
@@ -109,90 +97,53 @@ class Lyrics:
     def stop_show_lyric(self):
         self.stop = True
 
-def playMusic(music_name):
-    global PlayingMusic, music, seconds
-    try:
-        if music_name != PlayingMusic:
-            music = mp3play.load(music_name)
-            music.volume(10)
-            seconds = eyed3.load(music_name).info.time_secs
-            if seconds > music.seconds():
-                seconds = music.seconds()
-            name = os.path.split(music_name)[1]
-            print u"正在播放：" + name.decode('gbk') + "  " + str(seconds / 60).zfill(2) + ":" + str(seconds % 60).zfill(2)
-        music.play()
-        lrc_path = os.path.splitext(music_name)[0].decode('gbk')+u'.lrc'
-        # print lrc_path
-        if os.path.exists(lrc_path):
-            lyrics = Lyrics(lrc_path)
-            t_lyric = threading.Thread(target=lyrics.show_lyric)
-            t_lyric.start()
-        else:
-            print u"加载歌词失败"
-        time.sleep(seconds)
-        music.stop()
-    except KeyboardInterrupt:
-        print u"退出"
-        os.system("pause")
-        raise
-    except:
-        print u"不支持的文件格式"
-        print traceback.format_exc()
-        os.system("pause")
-        raise
-
-def random_all(name):
-    global PlayingMusic
-    if os.path.exists(name):
-        if os.path.isdir(name):
-            music_list = get_all_musics(name)
-        else:
-            music_list = [name]
-        while True:
-                try:
-                    music_name = random.choice(music_list)
-                    playMusic(music_name)
-                    PlayingMusic = music_name
-                except:
-                    break
-    else:
-        print u"目录/文件不存在"
-
-
 if __name__ == "__main__":
     while True:
         try:
-            for music in get_music_list(''):
-                music_info = get_music_info(str(music['id']))
-                if music_info:
-                    # content = requests.get(music_info['songLink'])
-                    num = str(random.randint(10000,99999))
-                    songName = num + "." + music_info['format']
-                    lrcName = num + ".lrc"
-                    urllib.urlretrieve(music_info['songLink'], songName)
-                    urllib.urlretrieve(music_info['lrcLink'], lrcName)
+            for m in get_music_list(''):
+                try:
+                    music_info = get_music_info(str(m['id']))
+                    if music_info:
+                        # content = requests.get(music_info['songLink'])
+                        num = str(random.randint(10000,99999))
+                        songName = num + "." + music_info['format']
+                        lrcName = num + ".lrc"
+                        urllib.urlretrieve(music_info['songLink'], songName)
+                        urllib.urlretrieve(music_info['lrcLink'], lrcName)
+                        if os.path.exists(songName):
+                            music = mp3play.load(songName)
+                            music.volume(10)
+                            seconds = music_info['time']
+                            name = music_info['songName']
+                            artistName = music_info['artistName']
+                            os.system('cls')
+                            print u"正在播放：" + name + "_" + artistName + "  " + str(seconds / 60).zfill(2) + ":" + str(seconds % 60).zfill(2)
+                            music.play()
+                            # print lrc_path
+                            if os.path.exists(lrcName):
+                                lyrics = Lyrics(lrcName)
+                                t_lyric = threading.Thread(target=lyrics.show_lyric)
+                                t_lyric.start()
+                            else:
+                                print u"加载歌词失败"
+                            time.sleep(seconds)
+                            music.stop()
+                            os.system('cls')
+                            if os.path.exists(lrcName):
+                                os.remove(lrcName)
+                            os.remove(songName)
+                except:
+                    music.stop()
+                    lyrics.stop_show_lyric()
+                    if os.path.exists(lrcName):
+                        os.remove(lrcName)
                     if os.path.exists(songName):
-                        music = mp3play.load(songName)
-                        music.volume(10)
-                        seconds = music_info['time']
-                        name = music_info['songName']
-                        artistName = music_info['artistName']
-                        os.system('cls')
-                        print u"正在播放：" + name + "_" + artistName + "  " + str(seconds / 60).zfill(2) + ":" + str(seconds % 60).zfill(2)
-                        music.play()
-                        # print lrc_path
-                        if os.path.exists(lrcName):
-                            lyrics = Lyrics(lrcName)
-                            t_lyric = threading.Thread(target=lyrics.show_lyric)
-                            t_lyric.start()
-                        else:
-                            print u"加载歌词失败"
-                        time.sleep(seconds)
-                        music.stop()
-                        time.sleep(5)
-                        os.system('cls')
-                        if os.path.exists(lrcName):
-                            os.remove(lrcName)
+                        os.remove(songName)
+                    continue
+                finally:
+                    if os.path.exists(lrcName):
+                        os.remove(lrcName)
+                    if os.path.exists(songName):
                         os.remove(songName)
         except:
             music.stop()
@@ -208,4 +159,3 @@ if __name__ == "__main__":
             if os.path.exists(songName):
                 os.remove(songName)
             print u"退出程序。"
-
