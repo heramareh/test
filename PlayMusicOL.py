@@ -3,6 +3,7 @@ import copy
 import random
 import re
 import threading
+import traceback
 import mp3play
 import requests
 import urllib
@@ -164,7 +165,6 @@ if __name__ == "__main__":
                         seconds = music_info['time']
                         name = music_info['songName']
                         artistName = music_info['artistName']
-                        os.system('cls')
                         print u"正在播放：" + name + "_" + artistName + "  " + str(seconds / 60).zfill(2) + ":" + str(
                             seconds % 60).zfill(2)
                         music.play()
