@@ -108,6 +108,12 @@ class Lyrics:
         self.stop = True
 
 if __name__ == "__main__":
+    music_dir = "music"
+    lrc_dir = "lrc"
+    if not os.path.exists(music_dir):
+        os.mkdir(music_dir)
+    if not os.path.exists(lrc_dir):
+        os.mkdir(lrc_dir)
     while True:
         try:
             for m in get_music_list(''):
@@ -116,8 +122,8 @@ if __name__ == "__main__":
                     if music_info:
                         # content = requests.get(music_info['songLink'])
                         num = str(random.randint(10000,99999))
-                        songName = num + "." + music_info['format']
-                        lrcName = num + ".lrc"
+                        songName = os.path.join(music_dir, num + "." + music_info['format'])
+                        lrcName = os.path.join(lrc_dir, num + ".lrc")
                         urllib.urlretrieve(music_info['songLink'], songName)
                         urllib.urlretrieve(music_info['lrcLink'], lrcName)
                         if os.path.exists(songName):
@@ -139,9 +145,16 @@ if __name__ == "__main__":
                             time.sleep(seconds)
                             music.stop()
                             os.system('cls')
-                            if os.path.exists(lrcName):
+                            music_name = os.path.join(music_dir, name + "_" + artistName + "." + music_info['format'])
+                            music_lrc = os.path.join(lrc_dir, name + "_" + artistName + ".lrc")
+                            if os.path.exists(lrcName) and not os.path.exists(music_lrc):
+                                os.renames(lrcName, music_lrc)
+                            else:
                                 os.remove(lrcName)
-                            os.remove(songName)
+                            if not os.path.exists(music_name):
+                                os.renames(songName, music_name)
+                            else:
+                                os.remove(songName)
                 except:
                     music.stop()
                     lyrics.stop_show_lyric()
