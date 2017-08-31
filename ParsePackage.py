@@ -49,10 +49,12 @@ print len(packages_list)
 # for i in packages_list:
 #     print type(i)
 titles = ["No.", "APIProtocol", "RequestURL", "RequestMethod", "ParamsInfo", "Data", "frame.number", "http.response_in", "http.request_in", "http.next_request_in", "http.next_response_in", "http.prev_request_in", "http.prev_response_in"]
+result_keys = ['No', "frame.coloring_rule.name", "http.request.full_uri", "http.request.method", "http.content_type", "http.file_data", "frame.number", "http.response_in", "http.request_in", "http.next_request_in", "http.next_response_in", "http.prev_request_in", "http.prev_response_in"]
 em = ExcelManage2()
 em.append_datas(titles)
-for i in packages_list:
+for id, i in enumerate(packages_list, 1):
     result = {}
+    result['No'] = id
     source = i["_source"]["layers"]
     if source.has_key("frame"):
         frame = source['frame']
@@ -64,4 +66,5 @@ for i in packages_list:
             result[key] = findData(http, key)
         for key in ["http.response_in", "http.request_in", "http.next_request_in", "http.next_response_in", "http.prev_request_in", "http.prev_response_in", "http.request.full_uri", "http.host", "http.content_type", "http.file_data"]:
             result[key] = getData(http, key)
-    print "*"*50
+    em.append_datas([result[key] for key in result_keys])
+em.save("d:\\ParseResult.xlsx")
