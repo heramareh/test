@@ -31,7 +31,7 @@ def get_music_info(music_id):
         if content.has_key('data') and content['data']:
             music_info = content['data']['songList'][0]
             use_info = {}
-            for i in ['music_name', 'artistName', 'format', 'songLink', 'lrcLink', 'time']:
+            for i in ['songName', 'artistName', 'format', 'songLink', 'lrcLink', 'time']:
                 use_info[i] = music_info[i]
             count += 1
             return use_info
@@ -170,49 +170,54 @@ if __name__ == "__main__":
                 music_info = get_music_info(str(m['id']))
                 if music_info:
                     # content = requests.get(music_info['songLink'])
-                    # num = str(random.randint(10000, 99999))
-                    seconds = music_info['time']
-                    name = music_info['music_name']
-                    artistName = music_info['artistName']
-                    music_name = os.path.join(music_dir, name + "_" + artistName + "." + music_info['format'])
-                    music_lrc = os.path.join(lrc_dir, name + "_" + artistName + ".lrc")
-                    if not os.path.exists(music_name):
-                        urllib.urlretrieve(music_info['songLink'], music_name)
-                        urllib.urlretrieve(music_info['lrcLink'], music_lrc)
-                    music = mp3play.load(music_name)
-                    music.volume(10)
-                    seconds = music_info['time']
-                    name = music_info['music_name']
-                    artistName = music_info['artistName']
-                    os.system('cls')
-                    print u"正在播放：" + name + "_" + artistName + "  " + str(seconds / 60).zfill(2) + ":" + str(
-                        seconds % 60).zfill(2)
-                    music.play()
-                    # print lrc_path
-                    if os.path.exists(music_lrc):
-                        lyrics = Lyrics(music_lrc)
-                        t_lyric = threading.Thread(target=lyrics.show_lyric)
-                        t_lyric.start()
-                    else:
-                        print u"加载歌词失败"
-                    time.sleep(seconds)
-                    music.stop()
-                    os.system('cls')
-                    music_name = os.path.join(music_dir, name + "_" + artistName + "." + music_info['format'])
-                    music_lrc = os.path.join(lrc_dir, name + "_" + artistName + ".lrc")
+                    num = str(random.randint(10000, 99999))
+                    songName = os.path.join(music_dir, num + "." + music_info['format'])
+                    lrcName = os.path.join(lrc_dir, num + ".lrc")
+                    urllib.urlretrieve(music_info['songLink'], songName)
+                    urllib.urlretrieve(music_info['lrcLink'], lrcName)
+                    if os.path.exists(songName):
+                        music = mp3play.load(songName)
+                        music.volume(10)
+                        seconds = music_info['time']
+                        name = music_info['songName']
+                        artistName = music_info['artistName']
+                        os.system('cls')
+                        print u"正在播放：" + name + "_" + artistName + "  " + str(seconds / 60).zfill(2) + ":" + str(
+                            seconds % 60).zfill(2)
+                        music.play()
+                        # print lrc_path
+                        if os.path.exists(lrcName):
+                            lyrics = Lyrics(lrcName)
+                            t_lyric = threading.Thread(target=lyrics.show_lyric)
+                            t_lyric.start()
+                        else:
+                            print u"加载歌词失败"
+                        time.sleep(seconds)
+                        music.stop()
+                        os.system('cls')
+                        music_name = os.path.join(music_dir, name + "_" + artistName + "." + music_info['format'])
+                        music_lrc = os.path.join(lrc_dir, name + "_" + artistName + ".lrc")
+                        if os.path.exists(lrcName) and not os.path.exists(music_lrc):
+                            os.renames(lrcName, music_lrc)
+                        else:
+                            os.remove(lrcName)
+                        if not os.path.exists(music_name):
+                            os.renames(songName, music_name)
+                        else:
+                            os.remove(songName)
             except:
                 music.stop()
                 lyrics.stop_show_lyric()
-                if os.path.exists(music_lrc):
-                    os.remove(music_lrc)
-                if os.path.exists(music_name):
-                    os.remove(music_name)
+                if os.path.exists(lrcName):
+                    os.remove(lrcName)
+                if os.path.exists(songName):
+                    os.remove(songName)
                 continue
             finally:
-                if os.path.exists(music_lrc):
-                    os.remove(music_lrc)
-                if os.path.exists(music_name):
-                    os.remove(music_name)
+                if os.path.exists(lrcName):
+                    os.remove(lrcName)
+                if os.path.exists(songName):
+                    os.remove(songName)
                 n = 0
 
     print u"退出程序。"
