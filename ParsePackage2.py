@@ -4,11 +4,11 @@ import json
 from ExcelManage2 import ExcelManage2
 titles = ["No.", "APIName", "APIProtocol", "RequestURL", "RequestMethod", "ParamsInfo", "APITestCase", "Active", "UserName", "Data", "Result", "status"]
 keys = ["No.", "APIName", "APIProtocol", "url", "type", "contentType", "APITestCase", "Active", "user", "param", "result", "status"]
-data_file_name = "requestdata.txt"
-result_file_name = "parseresult.xlsx"
+data_file_name = "all_result.txt"
+result_file_name = "all_result.xlsx"
 
 def read_file(file_name):
-    with open("requestdata.txt") as fp:
+    with open(data_file_name) as fp:
         content = fp.read()
     return content
 
