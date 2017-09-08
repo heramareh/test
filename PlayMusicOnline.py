@@ -135,7 +135,7 @@ if __name__ == "__main__":
                             # music = mp3play.load(songName)
                             # music.volume(10)
                             pygame.mixer.init()
-                            track = pygame.mixer.music.load(songName.decode('gbk').encode('utf8'))
+                            track = pygame.mixer.music.load(songName.decode().encode('utf8'))
                             pygame.mixer.music.set_volume(0.2)
                             seconds = music_info['time']
                             name = music_info['songName']
@@ -165,7 +165,7 @@ if __name__ == "__main__":
                             #     os.renames(songName, music_name)
                             # else:
                             #     os.remove(songName)
-                except:
+                except KeyboardInterrupt:
                     # music.stop()
                     # lyrics.stop_show_lyric()
                     pygame.mixer.music.stop()
@@ -176,6 +176,9 @@ if __name__ == "__main__":
                     # if os.path.exists(songName):
                     #     os.remove(songName)
                     continue
+                except:
+                    print u"加载音乐失败"
+                    print traceback.format_exc()
                 # finally:
                 #     if os.path.exists(lrcName):
                 #         os.remove(lrcName)
