@@ -11,6 +11,7 @@ channel_list_url = "http://fm.baidu.com/dev/api/?tn=channellist"
 music_list_url = "http://fm.baidu.com/dev/api/?tn=playlist&format=json&id="
 music_url = "http://music.baidu.com/data/music/fmlink?type=mp3&rate=320&songIds="
 count = 0
+music_info_file = "music_info.txt"
 def get_channel_list():
     channel_list = requests.get(channel_list_url).json()['channel_list']
     return channel_list
@@ -22,15 +23,14 @@ def get_music_list(channel_id):
 def get_music_info(music_id):
     global count
     try:
-        content = requests.get(music_url + music_id).json()
-        if content.has_key('data') and content['data']:
-            music_info = content['data']['songList'][0]
-            use_info = {}
-            for i in ['songName', 'artistName', 'format', 'songLink', 'lrcLink', 'time']:
-                use_info[i] = music_info[i]
-            count += 1
-            return use_info
-        return None
+        content = requests.get(music_url + music_id, timeout = 1).json()
+        music_info = content['data']['songList'][0]
+        print music_info['songName']
+        use_info = music_info
+        # for i in ['songName', 'artistName', 'format', 'songLink', 'lrcLink', 'time']:
+        #     use_info[i] = music_info[i]
+        count += 1
+        return use_info
     except:
         return None
 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     channel_list = get_channel_list()
     channel_names = []
     channel_dict = {}
-    all_music_info = []
+    all_music_info = {}
     for channel in channel_list:
         channel_name = channel['channel_name']
         # print isinstance(channel_name,str)
@@ -97,21 +97,33 @@ if __name__ == "__main__":
             elif name == 's':
                 print u"数据加载中，请稍等..."
                 start_time = time.time()
-                for channel_name in channel_names:
-                    music_list = get_music_list(channel_dict[channel_name])
-                    for music in music_list:
-                        music_info = get_music_info(str(music['id']))
-                        if music_info:
-                            all_music_info.append(music_info)
-                print time.time() - start_time
-                print count
+                if not os.path.exists(music_info_file):
+                    with open(music_info_file, 'w') as fp:
+                        print len(channel_names)
+                        for channel_name in channel_names:
+                            music_list = get_music_list(channel_dict[channel_name])
+                            print len(music_list)
+                            for music in music_list:
+                                music_info = get_music_info(str(music['id']))
+                                if music_info and not all_music_info.has_key(music_info['songName']+'_'+music_info['artistName']):
+                                    all_music_info[music_info['songName']+'_'+music_info['artistName']] = music_info
+                                    fp.write(music_info['songName']+'_'+music_info['artistName']+'||'+str(music_info)+'\n')
+                        # with open(music_info_file, 'w') as fp:
+                        #     fp.writelines([k+'||'+v+'\n' for k,v in all_music_info.items()])
+                        print time.time() - start_time
+                        print count
+                with open(music_info_file) as fp:
+                    contents = fp.readlines()
+                for content in contents:
+                    k,v = content.strip().split("||")
+                    all_music_info[k] = eval(v)
                 while True:
                     music_name = raw_input("请输入歌曲名称(输入“q”返回上一级)：".decode('utf8').encode('gbk')).decode("gbk")
                     if music_name == 'q':
                         break
                     search_result = []
-                    for music_info in all_music_info:
-                        if music_name in music_info['songName'] or music_info['artistName'] or music_info['albumName']:
+                    for music_info in all_music_info.keys():
+                        if music_name in music_info:
                             search_result.append(music_info)
                     for search in search_result:
                         print u"搜索结果（搜索到的歌曲）："
