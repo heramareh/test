@@ -23,7 +23,7 @@ def get_music_list(channel_id):
 def get_music_info(music_id):
     global count
     try:
-        content = requests.get(music_url + music_id, timeout = 1).json()
+        content = requests.get(music_url + music_id, timeout = 10).json()
         music_info = content['data']['songList'][0]
         print music_info['songName']
         use_info = music_info
@@ -124,9 +124,9 @@ if __name__ == "__main__":
                     search_result = []
                     for music_info in all_music_info.keys():
                         if music_name in music_info:
-                            search_result.append(music_info)
+                            search_result.append(all_music_info[music_info])
+                    print u"搜索结果（搜索到的歌曲）："
                     for search in search_result:
-                        print u"搜索结果（搜索到的歌曲）："
                         print search['songName'],
                     print
                     print
