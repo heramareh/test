@@ -16,6 +16,25 @@ sys.setdefaultencoding("utf8")
 
 music_list_url = "http://fm.baidu.com/dev/api/?tn=playlist&format=json&id="
 music_url = "http://music.baidu.com/data/music/fmlink?type=mp3&rate=320&songIds="
+create_table = """CREATE TABLE `music_info` (
+  `queryId` VARCHAR(100) DEFAULT NULL,
+  `songId` VARCHAR(100) NOT NULL,
+  `songName` VARCHAR(100) NOT NULL,
+  `artistId` VARCHAR(100) DEFAULT NULL,
+  `artistName` VARCHAR(100) DEFAULT NULL,
+  `albumId` VARCHAR(100) DEFAULT NULL,
+  `albumName` VARCHAR(100) DEFAULT NULL,
+  `songPicSmall` VARCHAR(500) DEFAULT NULL,
+  `songPicBig` VARCHAR(500) DEFAULT NULL,
+  `songPicRadio` VARCHAR(500) DEFAULT NULL,
+  `songLink` VARCHAR(500) DEFAULT NULL,
+  `lrcLink` VARCHAR(500) DEFAULT NULL,
+  `format` VARCHAR(100) DEFAULT NULL,
+  `time` VARCHAR(100) DEFAULT NULL,
+  `rate` VARCHAR(100) DEFAULT NULL,
+  `size` VARCHAR(100) DEFAULT NULL,
+  PRIMARY KEY (`songId`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8"""
 # 本地数据库信息
 sid = "localhost"
 db_host = "127.0.0.1"
