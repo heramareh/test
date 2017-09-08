@@ -190,7 +190,7 @@ if __name__ == "__main__":
                         #     continue
                         # music.volume(10)
                         pygame.mixer.init()
-                        track = pygame.mixer.music.load(songName)
+                        track = pygame.mixer.music.load(songName.decode('gbk').encode('utf8'))
                         pygame.mixer.music.set_volume(0.2)
                         # time.sleep(20)
                         seconds = music_info['time']

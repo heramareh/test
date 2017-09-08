@@ -135,7 +135,7 @@ if __name__ == "__main__":
                             # music = mp3play.load(songName)
                             # music.volume(10)
                             pygame.mixer.init()
-                            track = pygame.mixer.music.load(songName)
+                            track = pygame.mixer.music.load(songName.decode('gbk').encode('utf8'))
                             pygame.mixer.music.set_volume(0.2)
                             seconds = music_info['time']
                             name = music_info['songName']
