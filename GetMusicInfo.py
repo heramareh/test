@@ -1,19 +1,15 @@
 #encoding=utf-8
 
-import urllib
-
 import MySQLdb
-import mp3play
-import pygame
 import requests
 import copy
 import re
-import threading
 import traceback
-import os, sys, random, time, eyed3
+import os, sys, time
 reload(sys)
 sys.setdefaultencoding("utf8")
 
+channel_list_url = "http://fm.baidu.com/dev/api/?tn=channellist"
 music_list_url = "http://fm.baidu.com/dev/api/?tn=playlist&format=json&id="
 music_url = "http://music.baidu.com/data/music/fmlink?type=mp3&rate=320&songIds="
 create_table = """CREATE TABLE `music_info` (
@@ -219,6 +215,10 @@ class Lyrics:
     def stop_show_lyric(self):
         self.stop = True
 
+def get_channel_list():
+    channel_list = requests.get(channel_list_url).json()['channel_list']
+    return channel_list
+
 if __name__ == "__main__":
     music_dir = "music"
     lrc_dir = "lrc"
@@ -238,27 +238,40 @@ if __name__ == "__main__":
     mm.get_cursor()
     mm.execute_sql("SELECT songId FROM music_info;")
     all_music_info = [x[0] for x in mm.get_content_all()]
-    while count <= 5000:
-        content = []
-        try:
-            for m in get_music_list(''):
-                try:
-                    music_info = get_music_info(str(m['id']))
-                    if music_info and music_info['songId'] not in all_music_info:
-                        all_music_info.append(music_info['songId'])
-                        content.append(tuple([music_info[key] if music_info.has_key(key) and music_info[key] else "" for key in keys]))
-                        print count,
-                        print music_info['songName'] + '_' + music_info['artistName']
-                        count += 1
-                except:
-                    print traceback.format_exc()
-                    continue
-        except:
-            print traceback.format_exc()
-            continue
-        if len(content):
-            s = ','.join(['%s'] * len(keys))
-            mm.get_cursor()
-            mm.executemany_sql("insert into music_info values(" + s + ")", content)
-            mm.commit()
+    channel_list = ['']
+    # channel_list = get_channel_list()
+    channels_id = []
+    for channel in channel_list:
+        num = 1
+        while num <= 100:
+            print num
+            content = []
+            try:
+                for m in get_music_list(channel['channel_id'] if channel else ''):
+                    try:
+                        if str(m['id']) not in all_music_info:
+                            music_info = get_music_info(str(m['id']))
+                            if music_info:
+                                all_music_info.append(str(m['id']))
+                                content.append(tuple([music_info[key] if music_info.has_key(key) and music_info[key] else "" for key in keys]))
+                                print count,
+                                try:
+                                    print music_info['songName'] + '_' + music_info['artistName']
+                                except:
+                                    pass
+                                count += 1
+                    except:
+                        print traceback.format_exc()
+                        continue
+            except:
+                print traceback.format_exc()
+                continue
+            if len(content):
+                num = 1
+                s = ','.join(['%s'] * len(keys))
+                mm.get_cursor()
+                mm.executemany_sql("insert into music_info values(" + s + ")", content)
+                mm.commit()
+            else:
+                num += 1
     mm.close()

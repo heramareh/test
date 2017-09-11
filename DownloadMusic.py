@@ -1,5 +1,7 @@
 #encoding=utf-8
 import traceback
+
+import MySQLdb
 import requests
 import urllib
 import os,sys
@@ -12,6 +14,104 @@ music_list_url = "http://fm.baidu.com/dev/api/?tn=playlist&format=json&id="
 music_url = "http://music.baidu.com/data/music/fmlink?type=mp3&rate=320&songIds="
 count = 0
 music_info_file = "music_info.txt"
+
+# 本地数据库信息
+sid = "localhost"
+db_host = "127.0.0.1"
+db_port = 3306
+db_user = "root"
+db_pass = "gloryroad"
+db_db = "music"
+db_charset = "utf8"
+
+class MysqlManage(object):
+    u"""Mysql数据库操作类"""
+    def __init__(self):
+        self.section = sid
+        self.host = db_host
+        self.port = db_port
+        self.username = db_user
+        self.password = db_pass
+        self.db = db_db
+        self.charset = db_charset
+        self.conn = None
+        self.cursor = None
+
+    def connect(self):
+        u"""连接数据库"""
+        try:
+            self.conn = MySQLdb.connect(
+                host = self.host,
+                port = self.port,
+                user = self.username,
+                passwd = self.password,
+                db = self.db,
+                charset = self.charset)
+        except Exception, e:
+            assert 1 == 2 , u"连接数据库：" + self.db + "失败：" + str(e)
+
+    def get_cursor(self):
+        self.cursor = self.conn.cursor()
+        return self.cursor
+
+    def execute_sql(self, sql):
+        u"""执行sql语句"""
+        try:
+            self.cursor.execute(sql)
+        except MySQLdb.Error, e:
+            raise Exception(u"Mysql Error %d: %s" % (e.args[0], e.args[1]))
+
+    def executemany_sql(self, sql, datas):
+        u"""执行sql语句"""
+        try:
+            self.cursor.executemany(sql, datas)
+        except MySQLdb.Error, e:
+            raise Exception(u"Mysql Error %d: %s" % (e.args[0], e.args[1]))
+
+    def get_content(self):
+        u"""获取查询结果"""
+        try:
+            res = self.cursor.fetchone()
+            return res
+        except MySQLdb.Error, e:
+            raise Exception(u"Mysql Error %d: %s" % (e.args[0], e.args[1]))
+
+    def get_content_all(self):
+        u"""获取所有查询结果"""
+        try:
+            resSet = self.cursor.fetchall()
+            return resSet
+        except MySQLdb.Error, e:
+            raise Exception(u"Mysql Error %d: %s" % (e.args[0], e.args[1]))
+
+    def get_content_by_line(self, lines):
+        u"""获取指定条数的数据"""
+        try:
+            resTuple = self.cursor.fetchmany(lines)
+            return resTuple
+        except MySQLdb.Error, e:
+            raise Exception(u"Mysql Error %d: %s" % (e.args[0], e.args[1]))
+        finally:
+            self.close()
+
+    def commit(self):
+        u"""提交事务"""
+        try:
+            self.conn.commit()
+        except MySQLdb.Error, e:
+            raise Exception(u"Mysql Error %d: %s" % (e.args[0], e.args[1]))
+
+    def close(self):
+        u"""断开连接"""
+        try:
+            if None == self.cursor:
+                pass
+            else:
+                self.cursor.close()
+                self.conn.close()
+        except MySQLdb.Error, e:
+            raise Exception(u"断开连接失败：" + str(e))
+
 def get_channel_list():
     channel_list = requests.get(channel_list_url).json()['channel_list']
     return channel_list
@@ -63,7 +163,7 @@ if __name__ == "__main__":
         channel_id = channel['channel_id']
         channel_names.append(channel_name)
         channel_dict[channel_name] = channel_id
-    dir_ = raw_input("请输入下载目录：".decode('utf8').encode('gbk'))
+    dir_ = raw_input("请输入下载目录：".decode('utf8').encode('gbk')).decode("gbk")
     if not os.path.exists(dir_):
         print u"目录不存在"
         os.system("pause")
@@ -85,7 +185,7 @@ if __name__ == "__main__":
     print u"***************************************************"
     while True:
         try:
-            name = raw_input("请输入：".decode('utf8').encode('gbk')).decode("gbk")
+            name = raw_input("请输入(输入“q”退出)：".decode('utf8').encode('gbk')).decode("gbk")
             name_list = []
             if name == 'all':
                 print u"下载所有歌曲"
@@ -95,55 +195,45 @@ if __name__ == "__main__":
             elif name in channel_names:
                 name_list.append(name)
             elif name == 's':
-                print u"数据加载中，请稍等..."
-                start_time = time.time()
-                if not os.path.exists(music_info_file):
-                    with open(music_info_file, 'w') as fp:
-                        print len(channel_names)
-                        for channel_name in channel_names:
-                            music_list = get_music_list(channel_dict[channel_name])
-                            print len(music_list)
-                            for music in music_list:
-                                music_info = get_music_info(str(music['id']))
-                                if music_info and not all_music_info.has_key(music_info['songName']+'_'+music_info['artistName']):
-                                    all_music_info[music_info['songName']+'_'+music_info['artistName']] = music_info
-                                    fp.write(music_info['songName']+'_'+music_info['artistName']+'||'+str(music_info)+'\n')
-                        # with open(music_info_file, 'w') as fp:
-                        #     fp.writelines([k+'||'+v+'\n' for k,v in all_music_info.items()])
-                        print time.time() - start_time
-                        print count
-                with open(music_info_file) as fp:
-                    contents = fp.readlines()
-                for content in contents:
-                    k,v = content.strip().split("||")
-                    all_music_info[k] = eval(v)
+                mm = MysqlManage()
                 while True:
-                    music_name = raw_input("请输入歌曲名称(输入“q”返回上一级)：".decode('utf8').encode('gbk')).decode("gbk")
+                    music_name = raw_input("请输入歌曲名称(输入“q”返回上一级)：".decode('utf8').encode('gbk')).decode("gbk").encode('utf8')
                     if music_name == 'q':
                         break
-                    search_result = []
-                    for music_info in all_music_info.keys():
-                        if music_name in music_info:
-                            search_result.append(all_music_info[music_info])
-                    print u"搜索结果（搜索到的歌曲）："
-                    for search in search_result:
-                        print search['songName'],
-                    print
-                    print
-                    while True:
-                        song_name = raw_input("请输入要下载的歌曲名称(输入“q”返回上一级)：".decode('utf8').encode('gbk')).decode("gbk")
-                        if song_name == 'q':
-                            break
+                    mm.connect()
+                    mm.get_cursor()
+                    mm.execute_sql("select songId, songName, artistName, albumName, songLink, lrcLink, format from music_info where songName like '%" + music_name + "%' or artistName like '%" + music_name + "%' or albumName like '%" + music_name + "%';")
+                    search_result = mm.get_content_all()
+                    mm.close()
+                    if search_result:
+                        print u"搜索结果（搜索到的歌曲）："
+                        for i in ["songId", "songName", "artistName", "albumName"]:
+                            print str(i).ljust(15, ' '),
+                        print
                         for search in search_result:
-                            if song_name == search['songName']:
-                                print u"下载中..."
-                                if download_music(search,dir_):
-                                    print u"下载完成。"
-                                else:
-                                    print u"无法下载。"
+                            for i in search[:-3]:
+                                try:
+                                    print i[:10].ljust(15, ' '),
+                                except:
+                                    pass
+                            print
+                        print
+                        while True:
+                            song_id = raw_input("请输入要下载的歌曲id(输入“q”返回上一级)：".decode('utf8').encode('gbk')).strip()
+                            if song_id == 'q':
                                 break
-                        else:
-                            print u"输入有误请重新输入。"
+                            for search in search_result:
+                                if song_id == search[0]:
+                                    print u"下载中..."
+                                    if download_music({'songName': search[1], 'artistName':search[2], 'format': search[6], 'songLink': search[4], 'lrcLink': search[5]},dir_):
+                                        print u"下载完成。"
+                                    else:
+                                        print u"无法下载。"
+                                    break
+                            else:
+                                print u"输入有误请重新输入。"
+                    else:
+                        print u"未搜索到结果。"
 
                 continue
             else:
